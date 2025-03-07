@@ -51,6 +51,8 @@ start.bat
 ![img_4.png](img_4.png)
 ![img_5.png](img_5.png)
 ![img_7.png](img_7.png)
+![img_8.png](img_8.png)
+![img_9.png](img_9.png)
 ## 详细安装步骤
 
 1. 克隆仓库:
