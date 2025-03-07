@@ -1,6 +1,6 @@
 # Doubao Chat - AI Chat Application
 
-一个基于Flask框架开发的AI聊天应用，灵感来自豆包AI。支持OpenAI和DeepSeek中文大模型。
+一个基于Flask框架开发的AI聊天应用，灵感来自其他AI聊天工具。支持OpenAI和DeepSeek中文大模型。
 
 ## 功能特点
 
@@ -46,7 +46,11 @@ notepad .env  # 或使用其他编辑器
 # 启动应用
 start.bat
 ```
-
+##系统演示
+![img_6.png](img_6.png)
+![img_4.png](img_4.png)
+![img_5.png](img_5.png)
+![img_7.png](img_7.png)
 ## 详细安装步骤
 
 1. 克隆仓库:
@@ -119,10 +123,6 @@ flask run
 ```
 
 7. 打开浏览器访问 `http://127.0.0.1:5000`
-8. ![img.png](img.png)
-9. ![img_1.png](img_1.png)
-10. ![img_2.png](img_2.png)
-11. ![img_3.png](img_3.png)
 
 ## 支持的AI模型
 
