@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}自定义模型 - 豆包AI聊天{% endblock %}
+
+{% block styles %}
+<style>
+    .model-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        margin-left: 0.5rem;
+    }
+    
+    .model-badge-active {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .model-badge-inactive {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .model-card {
+        transition: all 0.3s ease;
+    }
+    
+    .model-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .model-actions {
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+    
+    .model-card:hover .model-actions {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-robot me-2"></i>自定义模型</h2>
+        <a href="{{ url_for('custom_model.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>添加新模型
+        </a>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if custom_models %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for model in custom_models %}
+                <div class="col">
+                    <div class="card h-100 model-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ model.display_name }}</h5>
+                            <span class="model-badge {% if model.is_active %}model-badge-active{% else %}model-badge-inactive{% endif %}">
+                                {% if model.is_active %}启用{% else %}禁用{% endif %}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text"><strong>模型名称:</strong> {{ model.model_name }}</p>
+                            <p class="card-text"><strong>API地址:</strong> {{ model.api_url }}</p>
+                            <p class="card-text"><strong>温度:</strong> {{ model.temperature }}</p>
+                            <p class="card-text"><strong>最大令牌数:</strong> {{ model.max_tokens }}</p>
+                            <p class="card-text"><strong>创建时间:</strong> {{ model.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between model-actions">
+                                <div>
+                                    <a href="{{ url_for('custom_model.edit', model_id=model.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit me-1"></i>编辑
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-success test-api-btn" data-model-id="{{ model.id }}">
+                                        <i class="fas fa-vial me-1"></i>测试
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-danger delete-model-btn" data-model-id="{{ model.id }}" data-model-name="{{ model.display_name }}">
+                                        <i class="fas fa-trash me-1"></i>删除
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-2 api-test-result" id="test-result-{{ model.id }}"></div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>您还没有添加任何自定义模型。点击上方的"添加新模型"按钮开始创建。
+        </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{{ url_for('chat.settings') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>返回设置
+        </a>
+    </div>
+</div>
+
+<!-- Delete Model Confirmation Modal -->
+<div class="modal fade" id="deleteModelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">删除自定义模型</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除 <span id="deleteModelName" class="fw-bold"></span> 吗？此操作无法撤销。</p>
+                <form id="deleteModelForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteModel">删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete model button clicks
+        const deleteButtons = document.querySelectorAll('.delete-model-btn');
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModelModal'));
+        const deleteModelForm = document.getElementById('deleteModelForm');
+        const deleteModelName = document.getElementById('deleteModelName');
+        const confirmDeleteButton = document.getElementById('confirmDeleteModel');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const modelId = this.getAttribute('data-model-id');
+                const modelName = this.getAttribute('data-model-name');
+                
+                deleteModelName.textContent = modelName;
+                deleteModelForm.action = `/custom_model/${modelId}/delete`;
+                
+                deleteModal.show();
+            });
+        });
+        
+        confirmDeleteButton.addEventListener('click', function() {
+            deleteModelForm.submit();
+        });
+        
+        // Handle API test button clicks
+        const testButtons = document.querySelectorAll('.test-api-btn');
+        
+        testButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const modelId = this.getAttribute('data-model-id');
+                const resultDiv = document.getElementById(`test-result-${modelId}`);
+                
+                // Show loading indicator
+                resultDiv.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-spinner fa-spin me-2"></i>正在测试API连接...</div>';
+                
+                // Test the API
+                fetch(`/custom_model/${modelId}/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    },
+                    body: new URLSearchParams({
+                        'csrf_token': document.querySelector('input[name="csrf_token"]').value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        resultDiv.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle me-2"></i>API连接成功</div>';
+                    } else {
+                        resultDiv.innerHTML = `<div class="alert alert-danger mt-2"><i class="fas fa-times-circle me-2"></i>${data.error || 'API连接失败'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<div class="alert alert-danger mt-2"><i class="fas fa-times-circle me-2"></i>测试失败: ${error.message}</div>`;
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

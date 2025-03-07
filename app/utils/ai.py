@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def generate_ai_response(chat_id, user_message):
     """
-    Generate an AI response using either OpenAI API, DeepSeek API, or 硅谷流动 API.
+    Generate an AI response using either OpenAI API, DeepSeek API, 硅谷流动 API, or custom models.
     
     Args:
         chat_id (int): The ID of the chat.
@@ -57,6 +57,8 @@ def generate_ai_response(chat_id, user_message):
             response = generate_deepseek_response(conversation)
         elif model_type.lower() == 'siliconflow':
             response = generate_siliconflow_response(conversation)
+        elif model_type.lower() == 'custom':
+            response = generate_custom_response(conversation)
         else:
             response = generate_openai_response(conversation)
         
@@ -76,6 +78,87 @@ def generate_ai_response(chat_id, user_message):
         logger.error(f"Error generating AI response: {str(e)}")
         return f"抱歉，生成回复时出现错误: {str(e)}"
 
+def generate_custom_response(conversation):
+    """Generate response using a custom model API."""
+    # Get custom model ID from config
+    custom_model_id = current_app.config.get('CUSTOM_MODEL_ID')
+    if not custom_model_id:
+        logger.warning("Custom model ID not configured")
+        return "自定义模型未配置，请在设置页面选择一个自定义模型。"
+    
+    try:
+        # Import here to avoid circular imports
+        from app.models.custom_model import CustomModel
+        from flask_login import current_user
+        
+        # Get the custom model from the database
+        custom_model = CustomModel.query.filter_by(id=custom_model_id, user_id=current_user.id).first()
+        if not custom_model:
+            logger.warning(f"Custom model with ID {custom_model_id} not found")
+            return "找不到指定的自定义模型，请在设置页面重新选择模型。"
+        
+        # Check if the model is active
+        if not custom_model.is_active:
+            logger.warning(f"Custom model with ID {custom_model_id} is not active")
+            return "自定义模型已被禁用，请在设置页面启用或选择其他模型。"
+        
+        # Optimize conversation history - limit to last 5 messages to reduce payload size
+        if len(conversation) > 6:  # +1 for system message
+            # Keep system message and last 5 exchanges
+            system_message = conversation[0]
+            conversation = [system_message] + conversation[-5:]
+            logger.info("Trimmed conversation history to last 5 messages")
+        
+        # Override system prompt if specified
+        if custom_model.system_prompt:
+            conversation[0]["content"] = custom_model.system_prompt
+        
+        # Prepare the request
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {custom_model.api_key}"
+        }
+        
+        data = {
+            "model": custom_model.model_name,
+            "messages": conversation,
+            "temperature": custom_model.temperature,
+            "max_tokens": custom_model.max_tokens,
+            "timeout": 15  # Add explicit timeout parameter if supported by the API
+        }
+        
+        logger.info(f"Sending request to custom API: {custom_model.api_url}")
+        logger.info(f"Using model: {custom_model.model_name}")
+        
+        # Call custom API with timeout
+        response = requests.post(custom_model.api_url, headers=headers, data=json.dumps(data), timeout=15)
+        
+        # Check if the request was successful
+        if response.status_code == 200:
+            response_json = response.json()
+            return response_json['choices'][0]['message']['content']
+        else:
+            error_message = f"自定义模型 API请求失败: HTTP {response.status_code}"
+            try:
+                error_json = response.json()
+                if 'error' in error_json:
+                    error_detail = error_json['error'].get('message', '')
+                    error_message += f" - {error_detail}"
+                    logger.error(f"API Error details: {error_json}")
+            except:
+                pass
+            logger.error(error_message)
+            return error_message
+    except requests.exceptions.Timeout:
+        logger.error("Custom API request timed out")
+        return "自定义模型 API请求超时，请稍后重试或考虑使用其他模型。"
+    except requests.exceptions.ConnectionError:
+        logger.error("Custom API connection error")
+        return "自定义模型 API连接错误，请检查网络连接或API地址是否正确。"
+    except Exception as e:
+        logger.error(f"Custom API call failed: {str(e)}")
+        return f"自定义模型 API调用失败: {str(e)}"
+
 def generate_openai_response(conversation):
     """Generate response using OpenAI API."""
     # Get OpenAI API key from config
@@ -92,31 +175,33 @@ def generate_openai_response(conversation):
             conversation = [system_message] + conversation[-5:]
             logger.info("Trimmed conversation history to last 5 messages")
         
-        openai.api_key = api_key
+        # Initialize the OpenAI client
+        client = openai.OpenAI(api_key=api_key)
         
         # Call OpenAI API
         logger.info("Sending request to OpenAI API")
         logger.info("Using model: gpt-3.5-turbo")
         
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=conversation,
             max_tokens=800,  # Reduced from 1000 to improve response time
             temperature=0.7,
-            request_timeout=15  # Add timeout parameter
+            timeout=15  # Add timeout parameter
         )
         
         # Extract and return the response text
         return response.choices[0].message.content
-    except openai.error.Timeout:
-        logger.error("OpenAI API request timed out")
-        return "OpenAI API请求超时，请稍后重试或考虑使用其他模型。"
-    except openai.error.APIConnectionError:
-        logger.error("OpenAI API connection error")
-        return "OpenAI API连接错误，请检查网络连接。"
     except Exception as e:
-        logger.error(f"OpenAI API call failed: {str(e)}")
-        return f"OpenAI API调用失败: {str(e)}"
+        error_message = str(e)
+        logger.error(f"OpenAI API call failed: {error_message}")
+        
+        if "timeout" in error_message.lower():
+            return "OpenAI API请求超时，请稍后重试或考虑使用其他模型。"
+        elif "connect" in error_message.lower() or "connection" in error_message.lower():
+            return "OpenAI API连接错误，请检查网络连接。"
+        else:
+            return f"OpenAI API调用失败: {error_message}"
 
 def generate_deepseek_response(conversation):
     """Generate response using DeepSeek API."""

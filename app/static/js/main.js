@@ -1,5 +1,5 @@
 /**
- * 豆包AI聊天 - 主JavaScript文件
+ * 个人AI聊天 - 主JavaScript文件
  */
 
 // 处理移动端导航栏折叠

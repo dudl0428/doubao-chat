@@ -197,6 +197,121 @@
         background-color: #ff6b6b;
         color: white;
     }
+    
+    .model-badge-custom {
+        background-color: #9775fa;
+        color: white;
+    }
+    
+    .model-switcher {
+        position: relative;
+        margin-left: 0.5rem;
+    }
+    
+    .model-switch-btn {
+        padding: 0.1rem 0.3rem;
+        margin-left: 0.25rem;
+        border-radius: 0.25rem;
+        color: #6c757d;
+    }
+    
+    .model-switch-btn:hover {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #495057;
+    }
+    
+    .model-switch-menu {
+        min-width: 10rem;
+        padding: 0.5rem 0;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .model-switch-menu .dropdown-item {
+        padding: 0.5rem 1rem;
+    }
+    
+    .model-switch-menu .dropdown-item.active {
+        background-color: #f8f9fa;
+        color: #212529;
+    }
+    
+    .model-switch-menu .dropdown-item:hover {
+        background-color: #f1f3f5;
+    }
+    
+    .btn-primary:active, .btn-primary.active {
+        transform: scale(0.95);
+        transition: transform 0.1s;
+    }
+    
+    .send-button-flash {
+        animation: sendButtonFlash 0.3s;
+    }
+    
+    @keyframes sendButtonFlash {
+        0% { background-color: #007bff; }
+        50% { background-color: #0056b3; }
+        100% { background-color: #007bff; }
+    }
+    
+    /* Markdown Styling */
+    .assistant-message {
+        line-height: 1.6;
+    }
+    
+    .assistant-message p {
+        margin-bottom: 12px;
+    }
+    
+    .assistant-message pre {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 12px 0;
+        border: 1px solid #e9ecef;
+    }
+    
+    .assistant-message code {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: #f8f9fa;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+    
+    .assistant-message .inline-code {
+        background-color: rgba(175, 184, 193, 0.2);
+        padding: 0.2em 0.4em;
+        border-radius: 6px;
+        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+        font-size: 85%;
+    }
+    
+    .assistant-message .code-block {
+        background-color: #f6f8fa;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        padding: 16px;
+        border: 1px solid #d0d7de;
+    }
+    
+    .assistant-message ul, .assistant-message ol {
+        padding-left: 20px;
+        margin: 12px 0;
+    }
+    
+    .assistant-message li {
+        margin-bottom: 6px;
+    }
+    
+    .assistant-message h3, 
+    .assistant-message h4, 
+    .assistant-message h5 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -240,13 +355,42 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <span class="ms-2 fw-bold">{{ active_chat.title }}</span>
-                {% if current_model == 'deepseek' %}
-                <span class="model-badge model-badge-deepseek">DeepSeek</span>
-                {% elif current_model == 'siliconflow' %}
-                <span class="model-badge model-badge-siliconflow">硅谷流动</span>
-                {% else %}
-                <span class="model-badge model-badge-openai">OpenAI</span>
-                {% endif %}
+                <div class="d-inline-block model-switcher">
+                    {% if current_model == 'deepseek' %}
+                    <span class="model-badge model-badge-deepseek">DeepSeek</span>
+                    {% elif current_model == 'siliconflow' %}
+                    <span class="model-badge model-badge-siliconflow">硅谷流动</span>
+                    {% elif current_model == 'custom' %}
+                    <span class="model-badge model-badge-custom">{{ custom_model.display_name }}</span>
+                    {% else %}
+                    <span class="model-badge model-badge-openai">OpenAI</span>
+                    {% endif %}
+                    <button class="btn btn-sm btn-link text-muted model-switch-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
+                    <ul class="dropdown-menu model-switch-menu">
+                        <li><h6 class="dropdown-header">切换模型</h6></li>
+                        <li><a class="dropdown-item {% if current_model == 'openai' %}active{% endif %}" href="#" data-model="openai">
+                            <i class="fas fa-check me-2 {% if current_model != 'openai' %}invisible{% endif %}"></i>OpenAI
+                        </a></li>
+                        <li><a class="dropdown-item {% if current_model == 'deepseek' %}active{% endif %}" href="#" data-model="deepseek">
+                            <i class="fas fa-check me-2 {% if current_model != 'deepseek' %}invisible{% endif %}"></i>DeepSeek
+                        </a></li>
+                        <li><a class="dropdown-item {% if current_model == 'siliconflow' %}active{% endif %}" href="#" data-model="siliconflow">
+                            <i class="fas fa-check me-2 {% if current_model != 'siliconflow' %}invisible{% endif %}"></i>硅谷流动
+                        </a></li>
+                        
+                        {% if custom_models %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">自定义模型</h6></li>
+                        {% for model in custom_models %}
+                        <li><a class="dropdown-item {% if current_model == 'custom' and custom_model_id == model.id|string %}active{% endif %}" href="#" data-model="custom" data-custom-model-id="{{ model.id }}">
+                            <i class="fas fa-check me-2 {% if not (current_model == 'custom' and custom_model_id == model.id|string) %}invisible{% endif %}"></i>{{ model.display_name }}
+                        </a></li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
             <div>
                 <a href="{{ url_for('chat.settings') }}" class="btn btn-sm btn-outline-secondary">
@@ -297,10 +441,13 @@
         <div class="chat-input">
             <form id="messageForm" data-chat-id="{{ active_chat.id }}">
                 <div class="input-group">
-                    <textarea class="form-control" id="messageInput" rows="1" placeholder="输入消息..." required></textarea>
+                    <textarea class="form-control" id="messageInput" rows="1" placeholder="输入消息... (按Enter发送，Shift+Enter换行)" required></textarea>
                     <button class="btn btn-primary" type="submit">
                         <i class="fas fa-paper-plane"></i>
                     </button>
+                </div>
+                <div class="form-text text-end small mt-1">
+                    <span class="text-muted">按 Enter 发送 · Shift+Enter 换行 · 按 / 快速聚焦</span>
                 </div>
             </form>
         </div>
@@ -373,6 +520,29 @@
             this.style.height = (this.scrollHeight) + 'px';
         });
         
+        // Handle keyboard shortcuts for sending messages
+        messageInput.addEventListener('keydown', function(e) {
+            // Enter key without Shift to send message
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevent default behavior (new line)
+                
+                // Only submit if there's content
+                if (this.value.trim()) {
+                    // Flash the send button to provide visual feedback
+                    const sendButton = messageForm.querySelector('button[type="submit"]');
+                    sendButton.classList.add('send-button-flash', 'active');
+                    
+                    // Remove the animation class after animation completes
+                    setTimeout(() => {
+                        sendButton.classList.remove('send-button-flash', 'active');
+                    }, 300);
+                    
+                    messageForm.dispatchEvent(new Event('submit'));
+                }
+            }
+            // Shift+Enter for new line (default behavior, no need to handle)
+        });
+        
         // Scroll to bottom of chat
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -423,10 +593,54 @@
             return content;
         }
         
+        // Render markdown formatting for messages
+        function renderMarkdown() {
+            const assistantMessages = document.querySelectorAll('.assistant-message');
+            assistantMessages.forEach(message => {
+                // Process code blocks
+                let content = message.innerHTML;
+                
+                // Skip if already processed or contains HTML elements
+                if (content.includes('<pre') || content.includes('<code>') || content.includes('<p>')) {
+                    return;
+                }
+                
+                // Replace line breaks with <br> tags
+                content = content.replace(/\n/g, '<br>');
+                
+                // Format code blocks
+                content = content.replace(/```(\w*)([\s\S]*?)```/g, function(match, language, code) {
+                    return `<pre class="code-block"><code class="${language}">${code.trim()}</code></pre>`;
+                });
+                
+                // Format inline code
+                content = content.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+                
+                // Format lists
+                content = content.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
+                content = content.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+                
+                // Format headings
+                content = content.replace(/^###\s+(.+)$/gm, '<h5>$1</h5>');
+                content = content.replace(/^##\s+(.+)$/gm, '<h4>$1</h4>');
+                content = content.replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
+                
+                // Format bold and italic
+                content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                
+                // Update the message content
+                message.innerHTML = content;
+            });
+        }
+        
         // Show error message in chat
         function showErrorMessage(error, errorType) {
             const errorBubble = document.createElement('div');
             errorBubble.className = 'alert alert-danger mt-3';
+            
+            // Get current model
+            const currentModel = document.querySelector('.model-switch-menu .dropdown-item.active')?.getAttribute('data-model') || 'openai';
             
             let errorContent = `<i class="fas fa-exclamation-circle me-2"></i>${error}`;
             
@@ -434,16 +648,22 @@
             if (errorType === 'api_key_missing') {
                 errorContent += `
                 <div class="mt-2">
-                    <a href="/chat/settings" class="btn btn-primary btn-sm">
-                        <i class="fas fa-cog me-1"></i>前往设置页面配置API密钥
+                    <a href="/chat/settings?model=${currentModel}#${currentModel}-section" class="btn btn-primary btn-sm">
+                        <i class="fas fa-key me-1"></i>配置API密钥
                     </a>
                 </div>`;
-            } else if (errorType === 'api_timeout') {
+            } else if (errorType === 'api_timeout' || errorType === 'request_timeout') {
                 errorContent += `
                 <div class="mt-2">
-                    <button class="btn btn-primary btn-sm retry-btn">
-                        <i class="fas fa-redo me-1"></i>重试
-                    </button>
+                    <p class="small">模型响应时间过长，您可以：</p>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-primary btn-sm model-switch-quick" data-model="openai">
+                            <i class="fas fa-exchange-alt me-1"></i>切换到OpenAI
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm retry-btn">
+                            <i class="fas fa-redo me-1"></i>重试
+                        </button>
+                    </div>
                 </div>`;
             } else if (errorType === 'api_connection_error') {
                 errorContent += `
@@ -453,16 +673,31 @@
                         <i class="fas fa-redo me-1"></i>重试
                     </button>
                 </div>`;
-            } else if (errorType === 'api_call_failed') {
+            } else if (errorType === 'api_call_failed' || error.includes('Authentication Fails') || error.includes('401')) {
                 errorContent += `
                 <div class="mt-2">
-                    <p class="small">可能是API密钥错误或服务器问题</p>
-                    <a href="/chat/settings" class="btn btn-primary btn-sm me-2">
-                        <i class="fas fa-cog me-1"></i>检查API设置
-                    </a>
-                    <button class="btn btn-outline-primary btn-sm retry-btn">
-                        <i class="fas fa-redo me-1"></i>重试
-                    </button>
+                    <p class="small">API密钥错误或已过期，请更新您的API密钥</p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/chat/settings?model=${currentModel}#${currentModel}-section" class="btn btn-primary btn-sm">
+                            <i class="fas fa-key me-1"></i>更新${currentModel === 'openai' ? 'OpenAI' : currentModel === 'deepseek' ? 'DeepSeek' : '硅谷流动'}密钥
+                        </a>
+                        <button class="btn btn-outline-primary btn-sm model-switch-quick" data-model="${currentModel === 'openai' ? 'deepseek' : 'openai'}">
+                            <i class="fas fa-exchange-alt me-1"></i>切换到${currentModel === 'openai' ? 'DeepSeek' : 'OpenAI'}
+                        </button>
+                    </div>
+                </div>`;
+            } else if (errorType === 'api_authentication_error') {
+                errorContent += `
+                <div class="mt-2">
+                    <p class="small">API认证失败，请检查并更新您的API密钥</p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/chat/settings?model=${currentModel}#${currentModel}-section" class="btn btn-primary btn-sm">
+                            <i class="fas fa-key me-1"></i>更新${currentModel === 'openai' ? 'OpenAI' : currentModel === 'deepseek' ? 'DeepSeek' : '硅谷流动'}密钥
+                        </a>
+                        <button class="btn btn-outline-primary btn-sm model-switch-quick" data-model="${currentModel === 'openai' ? 'deepseek' : 'openai'}">
+                            <i class="fas fa-exchange-alt me-1"></i>切换到${currentModel === 'openai' ? 'DeepSeek' : 'OpenAI'}
+                        </button>
+                    </div>
                 </div>`;
             }
             
@@ -493,6 +728,41 @@
                     }
                 });
             }
+            
+            // Add event listener to model switch buttons
+            const modelSwitchBtns = errorBubble.querySelectorAll('.model-switch-quick');
+            modelSwitchBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const model = this.getAttribute('data-model');
+                    
+                    // Show loading state
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>切换中...';
+                    this.disabled = true;
+                    
+                    // Switch model
+                    switchModel(model, () => {
+                        // On success, remove the error message and retry
+                        errorBubble.remove();
+                        
+                        // Resend the last message after a short delay to allow the model to switch
+                        setTimeout(() => {
+                            const lastUserMessage = document.querySelector('.user-message:last-of-type');
+                            if (lastUserMessage) {
+                                const content = lastUserMessage.textContent.trim();
+                                if (content) {
+                                    // Show typing indicator
+                                    showTypingIndicator();
+                                    scrollToBottom();
+                                    
+                                    // Resend the message
+                                    const chatId = messageForm.getAttribute('data-chat-id');
+                                    sendMessageToServer(chatId, content);
+                                }
+                            }
+                        }, 500);
+                    });
+                });
+            });
             
             // Auto-remove error message after 30 seconds
             setTimeout(() => {
@@ -549,7 +819,7 @@
                     
                     // Update chat title if it's a new chat
                     const activeChatTitle = document.querySelector('.chat-header span');
-                    if (activeChatTitle.textContent === '新对话') {
+                    if (activeChatTitle && activeChatTitle.textContent === '新对话') {
                         // Get the first chat item (which should be the current chat)
                         const firstChatItem = document.querySelector('.chat-item');
                         if (firstChatItem) {
@@ -571,7 +841,14 @@
                 if (error.name === 'AbortError') {
                     showErrorMessage('请求超时，模型响应时间过长。请尝试使用其他模型或稍后重试。', 'request_timeout');
                 } else {
-                    showErrorMessage(error.message || '发送消息失败，请重试', error.cause);
+                    // Check for authentication errors in the error message
+                    if (error.message && (error.message.includes('Authentication Fails') || 
+                                         error.message.includes('401') || 
+                                         error.message.includes('认证失败'))) {
+                        showErrorMessage('API认证失败：API密钥可能无效或已过期。请更新您的API密钥。', 'api_authentication_error');
+                    } else {
+                        showErrorMessage(error.message || '发送消息失败，请重试', error.cause);
+                    }
                 }
                 
                 clearTimeout(timeoutId);
@@ -584,6 +861,32 @@
             
             const message = messageInput.value.trim();
             if (!message) return;
+            
+            // Check if there's an API error already displayed
+            const existingApiError = document.querySelector('.alert-danger');
+            if (existingApiError && (
+                existingApiError.textContent.includes('API认证失败') || 
+                existingApiError.textContent.includes('Authentication Fails') ||
+                existingApiError.textContent.includes('API密钥错误')
+            )) {
+                // Remove the old error message
+                existingApiError.remove();
+                
+                // Show a more direct message about fixing the API key first
+                const warningBubble = document.createElement('div');
+                warningBubble.className = 'alert alert-warning mt-3';
+                warningBubble.innerHTML = `
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>请先更新API密钥</strong>
+                    <p class="small mt-2">您需要先更新API密钥才能继续对话。</p>
+                    <a href="/chat/settings" class="btn btn-warning btn-sm mt-2">
+                        <i class="fas fa-key me-1"></i>前往设置页面
+                    </a>
+                `;
+                chatMessages.appendChild(warningBubble);
+                scrollToBottom();
+                return;
+            }
             
             const chatId = this.getAttribute('data-chat-id');
             
@@ -780,6 +1083,104 @@
         
         // Initial render of markdown
         renderMarkdown();
+        
+        // Handle model switching
+        const modelSwitchItems = document.querySelectorAll('.model-switch-menu .dropdown-item');
+        
+        // Helper function to switch models
+        function switchModel(model, callback, customModelId) {
+            // Prepare request data
+            const requestData = {
+                'model': model,
+                'csrf_token': '{{ csrf_token }}'
+            };
+            
+            // Add custom model ID if provided
+            if (model === 'custom' && customModelId) {
+                requestData.custom_model_id = customModelId;
+            }
+            
+            // Send request to update model
+            fetch('/chat/switch_model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams(requestData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    if (callback) {
+                        callback();
+                    } else {
+                        // Reload the page to apply the new model
+                        window.location.reload();
+                    }
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || '切换模型失败，请重试');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('切换模型失败: ' + error.message);
+            });
+        }
+        
+        modelSwitchItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const model = this.getAttribute('data-model');
+                const customModelId = this.getAttribute('data-custom-model-id');
+                const currentModel = '{{ current_model }}';
+                const currentCustomModelId = '{{ custom_model_id }}';
+                
+                // Don't do anything if clicking the current model
+                if (model === currentModel && (!customModelId || customModelId === currentCustomModelId)) return;
+                
+                // Show confirmation dialog
+                let modelName = '';
+                if (model === 'openai') {
+                    modelName = 'OpenAI';
+                } else if (model === 'deepseek') {
+                    modelName = 'DeepSeek';
+                } else if (model === 'siliconflow') {
+                    modelName = '硅谷流动';
+                } else if (model === 'custom') {
+                    modelName = this.textContent.trim();
+                }
+                
+                if (confirm(`确定要切换到 ${modelName} 模型吗？`)) {
+                    // Show loading state
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + this.textContent;
+                    
+                    // Switch model
+                    switchModel(model, null, customModelId);
+                }
+            });
+        });
+        
+        // Auto-focus the message input on page load
+        setTimeout(() => {
+            messageInput.focus();
+        }, 500);
+        
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Slash key (/) to focus the message input, common in many chat apps
+            if (e.key === '/' && document.activeElement !== messageInput) {
+                // Only if not already in an input or textarea
+                if (document.activeElement.tagName !== 'INPUT' && 
+                    document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    messageInput.focus();
+                }
+            }
+        });
     });
 </script>
 {% endblock %} 

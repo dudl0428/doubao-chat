@@ -2,6 +2,46 @@
 
 {% block title %}设置 - 豆包AI聊天{% endblock %}
 
+{% block styles %}
+<style>
+    .api-test-result {
+        margin-top: 10px;
+    }
+    
+    .api-test-result .alert {
+        margin-bottom: 0;
+        padding: 0.5rem 1rem;
+    }
+    
+    .api-section {
+        transition: all 0.3s ease;
+    }
+    
+    .api-section.border-primary {
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.1);
+    }
+    
+    .test-api-key {
+        min-width: 80px;
+    }
+    
+    .custom-models-link {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        background-color: #f8f9fa;
+        border: 1px dashed #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-models-link:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="row justify-content-center">
@@ -30,13 +70,42 @@
                                 </label>
                                 <small class="text-muted d-block ms-4">响应速度：中等</small>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check mb-2">
                                 <input class="form-check-input model-selector" type="radio" name="ai_model_type" id="modelSiliconFlow" value="siliconflow" {% if current_model == 'siliconflow' %}checked{% endif %}>
                                 <label class="form-check-label" for="modelSiliconFlow">
                                     硅谷流动 (中文大模型)
                                 </label>
                                 <small class="text-muted d-block ms-4">响应速度：较慢</small>
                             </div>
+                            
+                            <!-- Custom Models Section -->
+                            <div class="form-check mb-2">
+                                <input class="form-check-input model-selector" type="radio" name="ai_model_type" id="modelCustom" value="custom" {% if current_model == 'custom' %}checked{% endif %}>
+                                <label class="form-check-label" for="modelCustom">
+                                    自定义模型
+                                </label>
+                                <small class="text-muted d-block ms-4">使用您自己配置的AI模型</small>
+                            </div>
+                            
+                            <div class="custom-models-section" id="custom-models-section" style="display: none;">
+                                <div class="custom-models-link text-center">
+                                    <a href="{{ url_for('custom_model.index') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-cogs me-2"></i>管理自定义模型
+                                    </a>
+                                    <p class="text-muted small mt-2 mb-0">添加、编辑或删除您的自定义AI模型</p>
+                                </div>
+                                
+                                <div class="mt-3" id="custom-model-selector">
+                                    <label class="form-label">选择自定义模型</label>
+                                    <select class="form-select" name="custom_model_id" id="customModelSelect">
+                                        <option value="">-- 请选择一个自定义模型 --</option>
+                                        {% for model in custom_models %}
+                                            <option value="{{ model.id }}" {% if custom_model_id == model.id|string %}selected{% endif %}>{{ model.display_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
                             <div class="alert alert-info mt-3 small">
                                 <i class="fas fa-info-circle me-2"></i>提示：如果模型响应时间过长，请尝试切换到响应速度更快的模型。
                             </div>
@@ -46,18 +115,36 @@
                             <h5>API密钥设置</h5>
                             <div class="mb-3 api-section" id="openai-section">
                                 <label for="openai_api_key" class="form-label">OpenAI API密钥</label>
-                                <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ openai_api_key if openai_api_key else '' }}" placeholder="sk-...">
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ openai_api_key if openai_api_key else '' }}" placeholder="sk-...">
+                                    <button class="btn btn-outline-secondary test-api-key" type="button" data-model="openai">
+                                        <i class="fas fa-vial me-1"></i>测试
+                                    </button>
+                                </div>
                                 <div class="form-text">仅在使用OpenAI模型时需要</div>
+                                <div class="api-test-result" id="openai-test-result"></div>
                             </div>
                             <div class="mb-3 api-section" id="deepseek-section">
                                 <label for="deepseek_api_key" class="form-label">DeepSeek API密钥</label>
-                                <input type="password" class="form-control" id="deepseek_api_key" name="deepseek_api_key" value="{{ deepseek_api_key if deepseek_api_key else '' }}" placeholder="sk-...">
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="deepseek_api_key" name="deepseek_api_key" value="{{ deepseek_api_key if deepseek_api_key else '' }}" placeholder="sk-...">
+                                    <button class="btn btn-outline-secondary test-api-key" type="button" data-model="deepseek">
+                                        <i class="fas fa-vial me-1"></i>测试
+                                    </button>
+                                </div>
                                 <div class="form-text">仅在使用DeepSeek模型时需要</div>
+                                <div class="api-test-result" id="deepseek-test-result"></div>
                             </div>
                             <div class="mb-3 api-section" id="siliconflow-section">
                                 <label for="siliconflow_api_key" class="form-label">硅谷流动 API密钥</label>
-                                <input type="password" class="form-control" id="siliconflow_api_key" name="siliconflow_api_key" value="{{ siliconflow_api_key if siliconflow_api_key else '' }}" placeholder="sk-...">
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="siliconflow_api_key" name="siliconflow_api_key" value="{{ siliconflow_api_key if siliconflow_api_key else '' }}" placeholder="sk-...">
+                                    <button class="btn btn-outline-secondary test-api-key" type="button" data-model="siliconflow">
+                                        <i class="fas fa-vial me-1"></i>测试
+                                    </button>
+                                </div>
                                 <div class="form-text">仅在使用硅谷流动模型时需要</div>
+                                <div class="api-test-result" id="siliconflow-test-result"></div>
                             </div>
                         </div>
                         
@@ -118,22 +205,37 @@
             // Show the selected model's sections
             let selectedModel = document.querySelector('.model-selector:checked').value;
             
-            // Always show the selected model's API section
-            document.getElementById(selectedModel + '-section').style.display = 'block';
-            
-            // Show advanced settings if they exist for the selected model
-            const advancedSection = document.getElementById(selectedModel + '-advanced');
-            if (advancedSection) {
-                advancedSection.style.display = 'block';
+            // Handle custom model section
+            if (selectedModel === 'custom') {
+                document.getElementById('custom-models-section').style.display = 'block';
+            } else {
+                document.getElementById('custom-models-section').style.display = 'none';
+                
+                // Always show the selected model's API section
+                document.getElementById(selectedModel + '-section').style.display = 'block';
+                
+                // Show advanced settings if they exist for the selected model
+                const advancedSection = document.getElementById(selectedModel + '-advanced');
+                if (advancedSection) {
+                    advancedSection.style.display = 'block';
+                }
+                
+                // Add visual emphasis to the selected model section
+                document.querySelectorAll('.api-section').forEach(section => {
+                    section.classList.remove('border', 'border-primary', 'rounded', 'p-3', 'bg-light');
+                });
+                
+                const activeSection = document.getElementById(selectedModel + '-section');
+                activeSection.classList.add('border', 'border-primary', 'rounded', 'p-3', 'bg-light');
             }
             
-            // Add visual emphasis to the selected model section
-            document.querySelectorAll('.api-section').forEach(section => {
-                section.classList.remove('border', 'border-primary', 'rounded', 'p-3', 'bg-light');
-            });
-            
-            const activeSection = document.getElementById(selectedModel + '-section');
-            activeSection.classList.add('border', 'border-primary', 'rounded', 'p-3', 'bg-light');
+            // Scroll to the section if there's a hash in the URL
+            if (window.location.hash) {
+                const section = document.querySelector(window.location.hash);
+                if (section) {
+                    section.scrollIntoView();
+                }
+            }
         }
         
         // Add event listeners to all model selectors
@@ -141,8 +243,77 @@
             selector.addEventListener('change', updateVisibleSections);
         });
         
+        // Check if there's a model parameter in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const modelParam = urlParams.get('model');
+        if (modelParam && ['openai', 'deepseek', 'siliconflow', 'custom'].includes(modelParam)) {
+            // Select the model from the URL
+            const modelSelector = document.getElementById('model' + modelParam.charAt(0).toUpperCase() + modelParam.slice(1));
+            if (modelSelector) {
+                modelSelector.checked = true;
+            }
+        }
+        
         // Initialize the visible sections based on the currently selected model
         updateVisibleSections();
+        
+        // Add event listeners to API key test buttons
+        const testButtons = document.querySelectorAll('.test-api-key');
+        testButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const model = this.getAttribute('data-model');
+                const apiKeyInput = document.getElementById(model + '_api_key');
+                const apiKey = apiKeyInput.value.trim();
+                const resultDiv = document.getElementById(model + '-test-result');
+                
+                // Clear previous results
+                resultDiv.innerHTML = '';
+                
+                // Check if API key is empty
+                if (!apiKey) {
+                    resultDiv.innerHTML = '<div class="alert alert-warning mt-2">请输入API密钥</div>';
+                    return;
+                }
+                
+                // Show loading indicator
+                resultDiv.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-spinner fa-spin me-2"></i>正在测试API密钥...</div>';
+                
+                // Get API URL from the corresponding input
+                let apiUrl = '';
+                if (model === 'deepseek') {
+                    apiUrl = document.getElementById('deepseek_api_url').value.trim();
+                } else if (model === 'siliconflow') {
+                    apiUrl = document.getElementById('siliconflow_api_url').value.trim();
+                }
+                
+                // Test the API key
+                fetch('/chat/test_api_key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    },
+                    body: new URLSearchParams({
+                        'model': model,
+                        'api_key': apiKey,
+                        'api_url': apiUrl,
+                        'csrf_token': document.querySelector('input[name="csrf_token"]').value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        resultDiv.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle me-2"></i>API密钥有效</div>';
+                    } else {
+                        resultDiv.innerHTML = `<div class="alert alert-danger mt-2"><i class="fas fa-times-circle me-2"></i>${data.error || 'API密钥无效'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<div class="alert alert-danger mt-2"><i class="fas fa-times-circle me-2"></i>测试失败: ${error.message}</div>`;
+                });
+            });
+        });
     });
 </script>
 {% endblock %} 

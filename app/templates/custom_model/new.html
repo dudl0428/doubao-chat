@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}添加自定义模型 - 豆包AI聊天{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section-title {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .api-test-result {
+        margin-top: 10px;
+    }
+    
+    .api-test-result .alert {
+        margin-bottom: 0;
+        padding: 0.5rem 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i>添加自定义模型</h4>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('custom_model.new') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        
+                        <div class="form-section">
+                            <h5 class="form-section-title">基本信息</h5>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">模型标识符 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="form-text">用于系统内部识别的唯一标识符，只能包含字母、数字和下划线</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="display_name" class="form-label">显示名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="display_name" name="display_name" required>
+                                <div class="form-text">在界面上显示的名称</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h5 class="form-section-title">API设置</h5>
+                            <div class="mb-3">
+                                <label for="api_url" class="form-label">API地址 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="api_url" name="api_url" required>
+                                <div class="form-text">例如: https://api.example.com/v1/chat/completions</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="api_key" class="form-label">API密钥 <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="api_key" name="api_key" required>
+                                <div class="form-text">通常以 "sk-" 开头</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="model_name" class="form-label">模型名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="model_name" name="model_name" required>
+                                <div class="form-text">API提供商指定的模型名称，例如: "gpt-3.5-turbo"</div>
+                            </div>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary" id="testApiBtn">
+                                    <i class="fas fa-vial me-1"></i>测试API连接
+                                </button>
+                                <div class="api-test-result" id="apiTestResult"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h5 class="form-section-title">高级设置</h5>
+                            <div class="mb-3">
+                                <label for="temperature" class="form-label">温度</label>
+                                <input type="number" class="form-control" id="temperature" name="temperature" value="0.7" min="0" max="2" step="0.1">
+                                <div class="form-text">控制生成文本的随机性，值越高越随机，值越低越确定性</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="max_tokens" class="form-label">最大令牌数</label>
+                                <input type="number" class="form-control" id="max_tokens" name="max_tokens" value="2000" min="100" max="8000">
+                                <div class="form-text">生成文本的最大长度</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="system_prompt" class="form-label">系统提示词</label>
+                                <textarea class="form-control" id="system_prompt" name="system_prompt" rows="3"></textarea>
+                                <div class="form-text">自定义系统提示词，留空则使用默认提示词</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">保存模型</button>
+                            <a href="{{ url_for('custom_model.index') }}" class="btn btn-outline-secondary">取消</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle API test button click
+        const testApiBtn = document.getElementById('testApiBtn');
+        const apiTestResult = document.getElementById('apiTestResult');
+        
+        testApiBtn.addEventListener('click', function() {
+            const apiUrl = document.getElementById('api_url').value.trim();
+            const apiKey = document.getElementById('api_key').value.trim();
+            const modelName = document.getElementById('model_name').value.trim();
+            
+            // Validate required fields
+            if (!apiUrl || !apiKey || !modelName) {
+                apiTestResult.innerHTML = '<div class="alert alert-warning mt-2">请填写API地址、API密钥和模型名称</div>';
+                return;
+            }
+            
+            // Show loading indicator
+            apiTestResult.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-spinner fa-spin me-2"></i>正在测试API连接...</div>';
+            
+            // Test the API
+            fetch('/chat/test_api_key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                },
+                body: new URLSearchParams({
+                    'model': 'custom',
+                    'api_key': apiKey,
+                    'api_url': apiUrl,
+                    'model_name': modelName,
+                    'csrf_token': document.querySelector('input[name="csrf_token"]').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    apiTestResult.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle me-2"></i>API连接成功</div>';
+                } else {
+                    apiTestResult.innerHTML = `<div class="alert alert-danger mt-2"><i class="fas fa-times-circle me-2"></i>${data.error || 'API连接失败'}</div>`;
+                }
+            })
+            .catch(error => {
+                apiTestResult.innerHTML = `<div class="alert alert-danger mt-2"><i class="fas fa-times-circle me-2"></i>测试失败: ${error.message}</div>`;
+            });
+        });
+        
+        // Auto-generate display name from name
+        const nameInput = document.getElementById('name');
+        const displayNameInput = document.getElementById('display_name');
+        
+        nameInput.addEventListener('input', function() {
+            if (!displayNameInput.value) {
+                // Convert snake_case or kebab-case to Title Case
+                const name = this.value.replace(/[_-]/g, ' ').replace(/\w\S*/g, function(txt) {
+                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+                });
+                displayNameInput.value = name;
+            }
+        });
+    });
+</script>
+{% endblock %} 

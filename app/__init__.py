@@ -42,10 +42,12 @@ def create_app():
         # Import and register blueprints
         from app.routes.auth import auth_bp
         from app.routes.chat import chat_bp
+        from app.routes.custom_model import custom_model_bp
         from app.errors.handlers import errors_bp
         
         app.register_blueprint(auth_bp)
         app.register_blueprint(chat_bp)
+        app.register_blueprint(custom_model_bp)
         app.register_blueprint(errors_bp)
         
         # Create database tables if they don't exist
