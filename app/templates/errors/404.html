@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}页面未找到 - 豆包AI聊天{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h1 class="display-1 text-muted">404</h1>
+            <h2 class="mb-4">页面未找到</h2>
+            <p class="lead mb-5">您访问的页面不存在或已被移除。</p>
+            <a href="{{ url_for('auth.index') }}" class="btn btn-primary">返回首页</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

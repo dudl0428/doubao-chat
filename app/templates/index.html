@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}豆包AI聊天 - 智能AI助手{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">欢迎使用豆包AI聊天</h1>
+            <p class="lead mb-5">基于先进的人工智能技术，为您提供智能、高效的对话体验</p>
+            
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">智能对话</h5>
+                            <p class="card-text">与AI助手进行自然、流畅的对话，获取信息和帮助</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <i class="fas fa-history fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">对话历史</h5>
+                            <p class="card-text">自动保存您的对话历史，随时查看和继续之前的对话</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <i class="fas fa-lock fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">安全可靠</h5>
+                            <p class="card-text">保护您的隐私和数据安全，提供可靠的服务体验</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-5">
+                {% if current_user.is_authenticated %}
+                <a href="/chat/" class="btn btn-primary btn-lg px-5" id="startChatBtn">开始聊天</a>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-3">登录</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg">注册</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startChatBtn = document.getElementById('startChatBtn');
+    if (startChatBtn) {
+        startChatBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/chat/';
+        });
+    }
+});
+</script>
+{% endblock %} 

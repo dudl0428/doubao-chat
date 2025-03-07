@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}服务器错误 - 豆包AI聊天{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h1 class="display-1 text-muted">500</h1>
+            <h2 class="mb-4">服务器错误</h2>
+            <p class="lead mb-5">抱歉，服务器遇到了一个错误。我们正在努力修复它。</p>
+            <a href="{{ url_for('auth.index') }}" class="btn btn-primary">返回首页</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

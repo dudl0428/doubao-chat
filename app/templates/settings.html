@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}设置 - 豆包AI聊天{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-cog me-2"></i>设置</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('chat.settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        
+                        <div class="mb-4">
+                            <h5>AI模型设置</h5>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="ai_model_type" id="modelOpenAI" value="openai" {% if current_model == 'openai' %}checked{% endif %}>
+                                <label class="form-check-label" for="modelOpenAI">
+                                    OpenAI (GPT-3.5-Turbo)
+                                </label>
+                                <small class="text-muted d-block ms-4">响应速度：快</small>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="ai_model_type" id="modelDeepSeek" value="deepseek" {% if current_model == 'deepseek' %}checked{% endif %}>
+                                <label class="form-check-label" for="modelDeepSeek">
+                                    DeepSeek (中文大模型)
+                                </label>
+                                <small class="text-muted d-block ms-4">响应速度：中等</small>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="ai_model_type" id="modelSiliconFlow" value="siliconflow" {% if current_model == 'siliconflow' %}checked{% endif %}>
+                                <label class="form-check-label" for="modelSiliconFlow">
+                                    硅谷流动 (中文大模型)
+                                </label>
+                                <small class="text-muted d-block ms-4">响应速度：较慢</small>
+                            </div>
+                            <div class="alert alert-info mt-3 small">
+                                <i class="fas fa-info-circle me-2"></i>提示：如果模型响应时间过长，请尝试切换到响应速度更快的模型。
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>API密钥设置</h5>
+                            <div class="mb-3">
+                                <label for="openai_api_key" class="form-label">OpenAI API密钥</label>
+                                <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ openai_api_key if openai_api_key else '' }}" placeholder="sk-...">
+                                <div class="form-text">仅在使用OpenAI模型时需要</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="deepseek_api_key" class="form-label">DeepSeek API密钥</label>
+                                <input type="password" class="form-control" id="deepseek_api_key" name="deepseek_api_key" value="{{ deepseek_api_key if deepseek_api_key else '' }}" placeholder="sk-...">
+                                <div class="form-text">仅在使用DeepSeek模型时需要</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="siliconflow_api_key" class="form-label">硅谷流动 API密钥</label>
+                                <input type="password" class="form-control" id="siliconflow_api_key" name="siliconflow_api_key" value="{{ siliconflow_api_key if siliconflow_api_key else '' }}" placeholder="sk-...">
+                                <div class="form-text">仅在使用硅谷流动模型时需要</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>高级设置</h5>
+                            <div class="mb-3">
+                                <label for="deepseek_api_url" class="form-label">DeepSeek API地址</label>
+                                <input type="text" class="form-control" id="deepseek_api_url" name="deepseek_api_url" value="{{ deepseek_api_url if deepseek_api_url else 'https://api.deepseek.com/v1/chat/completions' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="deepseek_model" class="form-label">DeepSeek模型名称</label>
+                                <input type="text" class="form-control" id="deepseek_model" name="deepseek_model" value="{{ deepseek_model if deepseek_model else 'deepseek-chat' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="siliconflow_api_url" class="form-label">硅谷流动 API地址</label>
+                                <input type="text" class="form-control" id="siliconflow_api_url" name="siliconflow_api_url" value="{{ siliconflow_api_url if siliconflow_api_url else 'https://api.siliconflow.com/v1/chat/completions' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="siliconflow_model" class="form-label">硅谷流动模型名称</label>
+                                <input type="text" class="form-control" id="siliconflow_model" name="siliconflow_model" value="{{ siliconflow_model if siliconflow_model else 'siliconflow-7b-chat' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">保存设置</button>
+                            <a href="{{ url_for('chat.index') }}" class="btn btn-outline-secondary">返回聊天</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
