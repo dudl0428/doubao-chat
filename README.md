@@ -34,7 +34,7 @@ nano .env  # 或使用其他编辑器
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/doubao-chat.git
+git clone https://github.com/dudl0428/doubao-chat.git
 cd doubao-chat
 
 # 运行安装脚本（自动使用清华大学镜像源）
@@ -57,7 +57,7 @@ start.bat
 
 1. 克隆仓库:
 ```bash
-git clone https://github.com/yourusername/doubao-chat.git
+git clone https://github.com/dudl0428/doubao-chat.git
 cd doubao-chat
 ```
 
