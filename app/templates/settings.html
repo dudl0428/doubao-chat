@@ -17,21 +17,21 @@
                         <div class="mb-4">
                             <h5>AI模型设置</h5>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="ai_model_type" id="modelOpenAI" value="openai" {% if current_model == 'openai' %}checked{% endif %}>
+                                <input class="form-check-input model-selector" type="radio" name="ai_model_type" id="modelOpenAI" value="openai" {% if current_model == 'openai' %}checked{% endif %}>
                                 <label class="form-check-label" for="modelOpenAI">
                                     OpenAI (GPT-3.5-Turbo)
                                 </label>
                                 <small class="text-muted d-block ms-4">响应速度：快</small>
                             </div>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="ai_model_type" id="modelDeepSeek" value="deepseek" {% if current_model == 'deepseek' %}checked{% endif %}>
+                                <input class="form-check-input model-selector" type="radio" name="ai_model_type" id="modelDeepSeek" value="deepseek" {% if current_model == 'deepseek' %}checked{% endif %}>
                                 <label class="form-check-label" for="modelDeepSeek">
                                     DeepSeek (中文大模型)
                                 </label>
                                 <small class="text-muted d-block ms-4">响应速度：中等</small>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="ai_model_type" id="modelSiliconFlow" value="siliconflow" {% if current_model == 'siliconflow' %}checked{% endif %}>
+                                <input class="form-check-input model-selector" type="radio" name="ai_model_type" id="modelSiliconFlow" value="siliconflow" {% if current_model == 'siliconflow' %}checked{% endif %}>
                                 <label class="form-check-label" for="modelSiliconFlow">
                                     硅谷流动 (中文大模型)
                                 </label>
@@ -44,17 +44,17 @@
                         
                         <div class="mb-4">
                             <h5>API密钥设置</h5>
-                            <div class="mb-3">
+                            <div class="mb-3 api-section" id="openai-section">
                                 <label for="openai_api_key" class="form-label">OpenAI API密钥</label>
                                 <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ openai_api_key if openai_api_key else '' }}" placeholder="sk-...">
                                 <div class="form-text">仅在使用OpenAI模型时需要</div>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3 api-section" id="deepseek-section">
                                 <label for="deepseek_api_key" class="form-label">DeepSeek API密钥</label>
                                 <input type="password" class="form-control" id="deepseek_api_key" name="deepseek_api_key" value="{{ deepseek_api_key if deepseek_api_key else '' }}" placeholder="sk-...">
                                 <div class="form-text">仅在使用DeepSeek模型时需要</div>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3 api-section" id="siliconflow-section">
                                 <label for="siliconflow_api_key" class="form-label">硅谷流动 API密钥</label>
                                 <input type="password" class="form-control" id="siliconflow_api_key" name="siliconflow_api_key" value="{{ siliconflow_api_key if siliconflow_api_key else '' }}" placeholder="sk-...">
                                 <div class="form-text">仅在使用硅谷流动模型时需要</div>
@@ -63,21 +63,25 @@
                         
                         <div class="mb-4">
                             <h5>高级设置</h5>
-                            <div class="mb-3">
-                                <label for="deepseek_api_url" class="form-label">DeepSeek API地址</label>
-                                <input type="text" class="form-control" id="deepseek_api_url" name="deepseek_api_url" value="{{ deepseek_api_url if deepseek_api_url else 'https://api.deepseek.com/v1/chat/completions' }}">
+                            <div class="advanced-section" id="deepseek-advanced">
+                                <div class="mb-3">
+                                    <label for="deepseek_api_url" class="form-label">DeepSeek API地址</label>
+                                    <input type="text" class="form-control" id="deepseek_api_url" name="deepseek_api_url" value="{{ deepseek_api_url if deepseek_api_url else 'https://api.deepseek.com/v1/chat/completions' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="deepseek_model" class="form-label">DeepSeek模型名称</label>
+                                    <input type="text" class="form-control" id="deepseek_model" name="deepseek_model" value="{{ deepseek_model if deepseek_model else 'deepseek-chat' }}">
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="deepseek_model" class="form-label">DeepSeek模型名称</label>
-                                <input type="text" class="form-control" id="deepseek_model" name="deepseek_model" value="{{ deepseek_model if deepseek_model else 'deepseek-chat' }}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="siliconflow_api_url" class="form-label">硅谷流动 API地址</label>
-                                <input type="text" class="form-control" id="siliconflow_api_url" name="siliconflow_api_url" value="{{ siliconflow_api_url if siliconflow_api_url else 'https://api.siliconflow.com/v1/chat/completions' }}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="siliconflow_model" class="form-label">硅谷流动模型名称</label>
-                                <input type="text" class="form-control" id="siliconflow_model" name="siliconflow_model" value="{{ siliconflow_model if siliconflow_model else 'siliconflow-7b-chat' }}">
+                            <div class="advanced-section" id="siliconflow-advanced">
+                                <div class="mb-3">
+                                    <label for="siliconflow_api_url" class="form-label">硅谷流动 API地址</label>
+                                    <input type="text" class="form-control" id="siliconflow_api_url" name="siliconflow_api_url" value="{{ siliconflow_api_url if siliconflow_api_url else 'https://api.siliconflow.com/v1/chat/completions' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="siliconflow_model" class="form-label">硅谷流动模型名称</label>
+                                    <input type="text" class="form-control" id="siliconflow_model" name="siliconflow_model" value="{{ siliconflow_model if siliconflow_model else 'siliconflow-7b-chat' }}">
+                                </div>
                             </div>
                         </div>
                         
@@ -91,4 +95,54 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all model selector radio buttons
+        const modelSelectors = document.querySelectorAll('.model-selector');
+        
+        // Function to update visible sections based on selected model
+        function updateVisibleSections() {
+            // Hide all API sections first
+            document.querySelectorAll('.api-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Hide all advanced sections
+            document.querySelectorAll('.advanced-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show the selected model's sections
+            let selectedModel = document.querySelector('.model-selector:checked').value;
+            
+            // Always show the selected model's API section
+            document.getElementById(selectedModel + '-section').style.display = 'block';
+            
+            // Show advanced settings if they exist for the selected model
+            const advancedSection = document.getElementById(selectedModel + '-advanced');
+            if (advancedSection) {
+                advancedSection.style.display = 'block';
+            }
+            
+            // Add visual emphasis to the selected model section
+            document.querySelectorAll('.api-section').forEach(section => {
+                section.classList.remove('border', 'border-primary', 'rounded', 'p-3', 'bg-light');
+            });
+            
+            const activeSection = document.getElementById(selectedModel + '-section');
+            activeSection.classList.add('border', 'border-primary', 'rounded', 'p-3', 'bg-light');
+        }
+        
+        // Add event listeners to all model selectors
+        modelSelectors.forEach(selector => {
+            selector.addEventListener('change', updateVisibleSections);
+        });
+        
+        // Initialize the visible sections based on the currently selected model
+        updateVisibleSections();
+    });
+</script>
 {% endblock %} 
